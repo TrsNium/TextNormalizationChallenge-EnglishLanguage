@@ -1,8 +1,8 @@
 import os
+import pandas as pd
 
 def mk_reshaped_train_data(path, before_path, after_path, class_path):
-    with open(path) as fs:
-        lines = fs.readlines()
+    df = pd.read_csv(path)
     
     #before
     b_s = []
@@ -17,11 +17,14 @@ def mk_reshaped_train_data(path, before_path, after_path, class_path):
     #dump_class
     d_class_ = []
     s_id = 0
-    for line in lines:
-        v_s_id, v_t_id, v_class, v_before, v_after = line.split(",")
+    for key, row in df.iterrows():
+        v_s_id = row["sentence_id"]
+        v_before = row["before"]
+        v_after = row["after"]
+        v_class = row["class"]
 
-        if v[0] != s_id:
-            s_id = v[0]
+        if v_s_id != s_id:
+            s_id = v_s_id
             
             b_s.append(" ".join(d_b_s))
             a_s.append(" ".join(d_a_s))
@@ -31,14 +34,14 @@ def mk_reshaped_train_data(path, before_path, after_path, class_path):
             d_a_s = []
             d_class_ =[]
             
-            d_b_s.append(v_before)
-            d_a_s.append(v_after)
-            d_class_.append(v_class)
+            d_b_s.append(str(v_before))
+            d_a_s.append(str(v_after))
+            d_class_.append(str(v_class))
             continue
 
-        d_b_s.append(v_before)
-        d_a_s.append(v_after)
-        d_class_.append(v_class)
+        d_b_s.append(str(v_before))
+        d_a_s.append(str(v_after))
+        d_class_.append(str(v_class))
 
     ##write data
     with open(before_path, "a") as fs:
@@ -50,4 +53,4 @@ def mk_reshaped_train_data(path, before_path, after_path, class_path):
     with open(class_path, "a") as fs:
         fs.write("\n".join(class_))
         
-mk_reshaped_train_data("en_train.scv", "train_before_sentence.txt", "train_after_sentence.txt", "train_class.txt")
+mk_reshaped_train_data("en_train.csv", "train_before_sentence.txt", "train_after_sentence.txt", "train_class.txt")
