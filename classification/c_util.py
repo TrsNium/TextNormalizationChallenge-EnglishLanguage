@@ -58,8 +58,9 @@ def convert_label(labels):
         r.append(content)
     return np.array(r)
 
-
-
+def mk_train_func(training_data_path, char_dict_path, class_dict_path, word_length, max_time_step, max_word_length=10, test=True):
+    char_dict = read_dict(char_dict_path)
+    class_dict = read_dict(class_dict_path)
 
 #save_dict(mk_word_dict(["../data/test_before_sentence_.txt", "../data/train_before_sentence_.txt"]), "../data/word_dict.txt")
 #save_dict(mk_charactor_dict(["../data/test_before_sentence_.txt", "../data/train_before_sentence_.txt"]), "../data/char_dict.txt")
