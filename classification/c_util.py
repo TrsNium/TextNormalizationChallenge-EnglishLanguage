@@ -35,30 +35,39 @@ def mk_class_dict(path):
     df = pd.read_csv(path)
     return list(set(df["class"]))
 
-def convert_sentence2word_idx(sentences, indexs, time_step, word_length):
+def convert_s2WIdx_eFeature(sentences, indexs, time_step, word_length):
     r = []
+    fr = []
     for sentence in sentences:
-        words = sentence.split(" ")
+        words = sentence.split("||")
         t = []
-        for word in words[:-1]:
+        ft = []
+        for i, word in enumerate(words[:-1]):
             converted = [indexs.index(char) for char in word]
+            ft.append([len(word.encode("utf-8")), len(word), i])
             while len(converted) != word_length and len(converted) <= word_length:
                 converted.append(len(indexs))
             t.append(converted[:word_length])
             
         while len(t) != time_step and len(t) <= time_step:
-            t.insert(0, [len(indexs)+1]*word_length)
+            i+=1
+            t.append([len(indexs)+1]*word_length)
+            ft.append([0,0,i])
         
         r.append(t[:time_step])
-    return r    
+        fr.append(ft[:time_step])
+    return r, fr
 
-def convert_label(labels):
-    r = []
+def convert_label(labels, label_dict):
+    b_ = []
     for label in labels:
-        content = [0]*2
-        content[int(label)] = 1
-        r.append(content)
-    return np.array(r)
+        t_=[]
+        for t_label in label.split("||")
+            content = [0]*len(label_dict)
+            content[label_dict.index(t_label)] = 1
+            t_.append(content)
+        b_.append(t_)
+    return np.array(b_)
 
 def mk_train_func(training_data_path, class_data_path, char_dict_path, class_dict_path, batch_size, word_length, max_time_step, max_word_length=10, test=True, p=0.7):
     training_data = read_dict(training_data_path)
@@ -77,14 +86,17 @@ def mk_train_func(training_data_path, class_data_path, char_dict_path, class_dic
         data_size = len(training_data)
         training_data = np.array(training_data)
         label_data = np.array(label_data)
+
+        ##feature
+        ##byte size of word, charactor length, token
         while True:
             choiced_idx = np.random.choice(data_size, batch_size)
             choiced_s = training_data[choiced_idx].tolist()
+            choiced_label = label_data[choiced_idx].tolist()
 
-            
-
-
-            yield
+            data, feature = convert_sentence2word_idx(choiced_s, char_dict, max_time_step, max_word_length)
+            label = convert_label(choiced_label, class_dict)
+            yield data, feature, label
 
     def test_func():
         while True:
