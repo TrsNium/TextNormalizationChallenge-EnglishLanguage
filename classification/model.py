@@ -41,7 +41,9 @@ class model():
     def __init__(self, args):
         self.args = args
         
-        self.inputs = tf.placeholder(dtype=tf.int32, shape=[None, self.args. max_time_step, self.args.max_word_length])
+        #単語全体のbyte数 単語数 文字の位置
+        self.feature = tf.placeholder(dtype=tf.int32, shape=[None, args.max_time_step, self.args.max_word_length])
+        self.inputs = tf.placeholder(dtype=tf.int32, shape=[None, self.args.max_time_step, self.args.max_word_length])
         self.labels = tf.placeholder(dtype=tf.float32, shape=[None, 2])
         
         with tf.variable_scope('Embedding_and_Conv') as scope:
@@ -109,12 +111,6 @@ class model():
     def train(self):
         opt_ = tf.train.GradientDescentOptimizer(self.args.lr).minimize(self.loss)
         
-        train_labels, train_inp, sentences = mk_char_level_cnn_rnn_train_data(self.args.data_dir+"train.txt", self.args.data_dir+"char_index.txt", self.args.max_time_step, self.args.max_word_length)
-        if self.args.test:
-            train_inp, test_inp, train_labels, test_labels = train_test_split(train_inp, train_labels, test_size=0.33, random_state=42)
-            test_data_size = test_inp.shape[0]
-        train_data_size = train_inp.shape[0]
-        
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True
         config.log_device_placement = True
@@ -124,31 +120,16 @@ class model():
             graph = tf.summary.FileWriter("./logs", sess.graph)
             
             for itr in range(self.args.itrs):
-                choiced_idx = random.sample(range(train_data_size), self.args.batch_size)
-                loss, _ = sess.run([self.loss, opt_], feed_dict={self.inputs: train_inp[choiced_idx], self.labels:train_labels[choiced_idx]})
 
                 if itr % 10 == 0:
-                    choiced_idx = random.sample(range(train_data_size), self.args.batch_size)
-                    labels = train_labels[choiced_idx]
-                    sentences_ = [sentences[idx] for idx in choiced_idx]
-                    loss, out = sess.run([self.loss, self.outs], feed_dict={self.inputs: train_inp[choiced_idx], self.labels:labels})
-                    accuracy = len([i for i in range(self.args.batch_size) if np.argmax(labels[i], axis=-1) == np.argmax(out[i], axis=-1)])/self.args.batch_size
-                    print("itr:",itr,"    loss:", loss, accuracy)
+                    
             
                 if itr % 1000 == 0:
                     saver.save(sess, 'save/model.ckpt', itr)
-                    print('-----------------------saved model-------------------------')
+                    print('-----------------------saved model--------------------------')
 
-
-            if self.args.test:
-                acctualy_ = 0
-                for i in range(int(test_data_size/self.args.batch_size)):
-                    labels = test_labels[i*self.args.batch_size:(i+1)*self.args.batch_size]
-                    out = sess.run(self.outs, feed_dict={self.inputs: test_inp[i*self.args.batch_size:(i+1)*self.args.batch_size]})
-                    acctualy = len([i for i in range(self.args.batch_size) if np.argmax(out, -1)[i] == np.argmax(labels, -1)[i]])/self.args.batch_size
-                    acctualy_ += acctualy
-                    print(acctualy)
-                print("avg", acctualy_/(int(test_data_size/self.args.batch_size)))
+    def test(self):
+        pass
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
