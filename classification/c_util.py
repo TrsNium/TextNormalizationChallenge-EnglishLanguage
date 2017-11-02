@@ -58,14 +58,20 @@ def convert_s2WIdx_eFeature(sentences, indexs, time_step, word_length):
         fr.append(ft[:time_step])
     return r, fr
 
-def convert_label(labels, label_dict):
+def convert_label(labels, label_dict, time_step):
     b_ = []
     for label in labels:
         t_=[]
         for t_label in label.split("||")
-            content = [0]*len(label_dict)
+            content = [0]*(len(label_dict)+1)
             content[label_dict.index(t_label)] = 1
             t_.append(content)
+
+        while len(t_) != time_step and len(t_) <= time_step:
+            content = [0]*(len(t_)+1)
+            content[-1] = 1
+            t_.append(content)
+
         b_.append(t_)
     return np.array(b_)
 
@@ -94,15 +100,25 @@ def mk_train_func(training_data_path, class_data_path, char_dict_path, class_dic
             choiced_s = training_data[choiced_idx].tolist()
             choiced_label = label_data[choiced_idx].tolist()
 
-            data, feature = convert_sentence2word_idx(choiced_s, char_dict, max_time_step, max_word_length)
+            data, feature = convert_s2WIdx_eFeature(choiced_s, char_dict, max_time_step, max_word_length)
             label = convert_label(choiced_label, class_dict)
             yield data, feature, label
 
     def test_func():
+        end_s = -(len(test_data)%batch_size)
+        test_data = test_data[:end_s]
+        test_label_data = test_label_data[:end_s]
         while True:
+            choiced_s = test_data[:batch_size]
+            choiced_c = test_label_data[:batch_size]
 
-            yield
-        
+            data, feature = convert_s2WIdx_eFeature(choiced_s, char_dict, max_time_step, max_word_length)
+            label = convert_label(choiced_label, class_dict)
+
+            del test_data[:batch_size]
+            del test_label_data[:batch_size]
+
+            yield data, feature, label, choiced_s, choiced_c
 
     if test:
         return train_func, test_func
