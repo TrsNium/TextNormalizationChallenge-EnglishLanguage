@@ -141,10 +141,15 @@ def mk_score_board(sentences, labels, outputs, ans):
         for j, word, s_label in enumerate(words, s_labels):
             t.append(",".join([str(i), word, s_label, str(outputs[i,j]), "TRUE" if outputs[i,j]==ans[i,j] else "FALSE"]))
         r.append(t)
-    return "\n".join(r)
+    return r
 
-
-        
+def to_csv(array, save_path):
+    init = "sentence_num, Word, Label, Output, TrueOrFalse\n"
+    content = "\n".join(array)
+    content = init + cnontent
+    with open(save_path , 'a') as fs:
+        fs.write(content)
+    return None
 
 #save_dict(mk_word_dict(["../data/test_before_sentence_.txt", "../data/train_before_sentence_.txt"]), "../data/word_dict.txt")
 #save_dict(mk_charactor_dict(["../data/test_before_sentence_.txt", "../data/train_before_sentence_.txt"]), "../data/char_dict.txt")

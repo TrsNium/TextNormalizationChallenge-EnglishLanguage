@@ -1,13 +1,7 @@
-import sys
-sys.path.append('../')
-
-
 import tensorflow as tf
 import argparse
-from util import *
+from c_util import *
 import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 import numpy as np
 import os
 import random
@@ -111,6 +105,11 @@ class model():
     def train(self):
         opt_ = tf.train.GradientDescentOptimizer(self.args.lr).minimize(self.loss)
         
+        if self.args.test:
+            train_func, test_func = mk_train_func("../data/train_before_sentence_.txt", "../data/train_class_.txt", "../data/char_dict.txt", "../data/class_dict.txt", self.args.batch_size, self.args.max_time_step, self.args.max_word_length)
+        else:
+            train_func = mk_train_func("../data/train_before_sentence_.txt", "../data/train_class_.txt", "../data/char_dict.txt", "../data/class_dict.txt", selfargs.batch_size, self.args.max_time_step, self.args.max_word_length)
+
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True
         config.log_device_placement = True
@@ -119,14 +118,23 @@ class model():
             saver = tf.train.Saver(tf.global_variables())
             graph = tf.summary.FileWriter("./logs", sess.graph)
             
-            for itr in range(self.args.itrs):
+            for itr, (data, feature, label) in enumerate(train_func()):
+                loss, _ = sess.run([self.loss, opt_], {self.feature:feature, self.inputs:data, self.labels:label})
 
                 if itr % 10 == 0:
-                    
+                    print(itr, "  :", loss)
             
                 if itr % 1000 == 0:
                     saver.save(sess, 'save/model.ckpt', itr)
                     print('-----------------------saved model--------------------------')
+
+            if self.args.test:
+                result = []
+                for i, (data, feature, label, choiced_s, choiced_l) in enumerate(test_func()):
+                    output_ = sess.run([self.outs], {self.feature:feature, self.inputs:data})
+                    result += mk_score_board(choiced_s, choiced_l, output_, label)
+                    print(i)
+                to_csv(result)    
 
     def test(self):
         pass
