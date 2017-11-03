@@ -129,24 +129,26 @@ def mk_train_func(training_data_path, class_data_path, char_dict_path, class_dic
 
     return train_func
 
-def mk_score_board(sentences, labels, outputs, ans):
+def mk_score_board(args, sentences, labels, outputs, ans):
     #output shape =  [batch_size, time_step , label_size]
-    outputs = np.argmax(outputs)
-    ans = np.argmax(ans)
+    outputs = np.argmax(outputs, axis=-1)
+    ans = np.argmax(ans, axis=-1)
     r = []
     for i, (sentence, label) in enumerate(zip(sentences, labels)):
         words = sentence.split("||")
         s_labels = label.split("||")
-        t = []
-        for j, word, s_label in enumerate(words, s_labels):
-            t.append(",".join([str(i), word, s_label, str(outputs[i,j]), "TRUE" if outputs[i,j]==ans[i,j] else "FALSE"]))
-        r.append(t)
-    return r
+        for j, (word, s_label) in enumerate(zip(words, s_labels)):
+            if args.max_time_step == j+1:
+                break
+            content = str(",".join([str(i), word, s_label, str(outputs[i,j]), "TRUE" if outputs[i,j]==ans[i,j] else "FALSE"]) + "\n")
+            r.append(content)
+    return "".join(r)
 
 def to_csv(array, save_path):
     init = "sentence_num, Word, Label, Output, TrueOrFalse\n"
-    content = "\n".join(array)
-    content = init + cnontent
+    content = "".join(array)
+    #print(content)
+    content = init + content
     with open(save_path , 'a') as fs:
         fs.write(content)
     return None
