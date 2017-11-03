@@ -36,7 +36,7 @@ class model():
         self.args = args
         
         #単語全体のbyte数 単語数 文字の位置
-        self.feature = tf.placeholder(dtype=tf.int32, shape=[None, args.max_time_step, 3])
+        self.feature = tf.placeholder(dtype=tf.float32, shape=[None, args.max_time_step, 3])
         self.inputs = tf.placeholder(dtype=tf.int32, shape=[None, self.args.max_time_step, self.args.max_word_length])
         self.labels = tf.placeholder(dtype=tf.float32, shape=[None, args.max_time_step, 17])
         
@@ -61,7 +61,7 @@ class model():
                 cnn_output = tf.contrib.layers.batch_norm(tf.concat([t_cnn_output for t_cnn_output in t_cnn_outputs], axis=-1))
                 higway_out = self.highway(cnn_output, sum(self.args.filter_nums), reuse= True if t!=0 else False) if  self.args.highway == True \
                                                                                             else cnn_output
-                cnn_outputs.append(tf.concat([cnn_output, self.feature[:,t,:]])
+                cnn_outputs.append(tf.concat([higway_out, self.feature[:,t,:]], axis=-1))
             cnn_outputs = tf.convert_to_tensor(cnn_outputs)
      
     
@@ -93,10 +93,10 @@ class model():
                 if t != 0:
                     tf.get_variable_scope().reuse_variables()
 
-                logit = tf.layers.dense(dense_input, 17, name="Dense")
-                outs = tf.nn.softmax(logit)
+                logit = tf.layers.dense(rnn_out[t], 17, name="Dense")
+                out = tf.nn.softmax(logit)
                 logits.append(logit)
-                outs.append(outs)
+                outs.append(out)
 
             logits = tf.convert_to_tensor(logits)
             self.outs = tf.convert_to_tensor(outs)
