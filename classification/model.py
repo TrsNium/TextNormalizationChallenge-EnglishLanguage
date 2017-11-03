@@ -59,8 +59,9 @@ class model():
                     t_cnn_outputs.append(tf.reshape(bn(pool_), (-1, filter_num)))
 
                 cnn_output = tf.contrib.layers.batch_norm(tf.concat([t_cnn_output for t_cnn_output in t_cnn_outputs], axis=-1))
-                cnn_outputs.append(self.highway(cnn_output, sum(self.args.filter_nums), reuse= True if t!=0 else False)) if  self.args.highway == True \
-                                                                                            else cnn_outputs.append(cnn_output)
+                higway_out = self.highway(cnn_output, sum(self.args.filter_nums), reuse= True if t!=0 else False) if  self.args.highway == True \
+                                                                                            else cnn_output
+                cnn_outputs.append(tf.concat([cnn_output, self.feature[:,t,:]])
             cnn_outputs = tf.convert_to_tensor(cnn_outputs)
      
     
