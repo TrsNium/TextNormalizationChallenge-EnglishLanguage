@@ -36,9 +36,9 @@ class model():
         self.args = args
         
         #単語全体のbyte数 単語数 文字の位置
-        self.feature = tf.placeholder(dtype=tf.int32, shape=[None, args.max_time_step, self.args.max_word_length])
+        self.feature = tf.placeholder(dtype=tf.int32, shape=[None, args.max_time_step, 3])
         self.inputs = tf.placeholder(dtype=tf.int32, shape=[None, self.args.max_time_step, self.args.max_word_length])
-        self.labels = tf.placeholder(dtype=tf.float32, shape=[None, 2])
+        self.labels = tf.placeholder(dtype=tf.float32, shape=[None, args.max_time_step, 17])
         
         with tf.variable_scope('Embedding_and_Conv') as scope:
             cnn_outputs = []
@@ -86,13 +86,24 @@ class model():
             rnn_out, self.out_state = tf.nn.dynamic_rnn(cell, cnn_outputs, initial_state=state_in, time_major=True,dtype=tf.float32)
         
         with tf.variable_scope("dense_layer") as scope:
-            #dense_input = tf.reduce_sum(rnn_out, axis=0)
-            dense_input = rnn_out[-1]
-            logits = tf.layers.dropout(tf.layers.dense(dense_input, 2, name="Dense"), rate=0.5, training=True)
-            self.outs = tf.nn.softmax(logits)
+            logits = []
+            outs = []
+            for t in range(self.args.max_time_step):
+                if t != 0:
+                    tf.get_variable_scope().reuse_variables()
+
+                logit = tf.layers.dense(dense_input, 17, name="Dense")
+                outs = tf.nn.softmax(logit)
+                logits.append(logit)
+                outs.append(outs)
+
+            logits = tf.convert_to_tensor(logits)
+            self.outs = tf.convert_to_tensor(outs)
 
         with tf.variable_scope("loss") as scope:
-            self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=self.labels))
+            logits = tf.reshape(logits, shape=(-1, 17))
+            labels = tf.reshape(self.labels, shape=(-1, 17))
+            self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=labels))
     
     def highway(self, x, size, activation=tf.nn.tanh, carry_bias=-1.0, reuse=False):
         T = tf.layers.dense(x, size, activation=tf.nn.sigmoid, name="transfort_gate", reuse=reuse)
