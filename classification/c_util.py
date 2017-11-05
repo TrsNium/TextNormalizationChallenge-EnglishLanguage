@@ -140,7 +140,7 @@ def mk_score_board(args, sentences, labels, outputs, ans):
         for j, (word, s_label) in enumerate(zip(words, s_labels)):
             if args.max_time_step == j+1:
                 break
-            content = str(",".join([str(i), word, s_label, str(outputs[i,j]), "TRUE" if outputs[i,j]==ans[i,j] else "FALSE"]) + "\n")
+            content = str(",".join([str(i), '"'+word+'"', '"'+s_label+'"', str(outputs[i,j]), '"'+"TRUE"+'"' if outputs[i,j]==ans[i,j] else '"'+"FALSE"+'"']) + "\n")
             r.append(content)
     return "".join(r)
 

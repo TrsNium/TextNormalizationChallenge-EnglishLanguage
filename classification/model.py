@@ -115,7 +115,7 @@ class model():
         return y
     
     def train(self):
-        opt_ = tf.train.MomentumOptimizer(self.args.lr, 0.002).minimize(self.loss)
+        opt_ = tf.train.AdamOptimizer(self.args.lr).minimize(self.loss)
         
         if self.args.test:
             train_func, test_func = mk_train_func("../data/train_before_sentence_.txt", "../data/train_class_.txt", "../data/char_dict.txt", "../data/class_dict.txt", self.args.batch_size, self.args.max_time_step, self.args.max_word_length, p=0.1)
@@ -160,18 +160,18 @@ class model():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument("--lr", dest="lr", type=float, default= 0.0002)
+    parser.add_argument("--lr", dest="lr", type=float, default= 0.002)
     parser.add_argument("--cell_model", dest="cell_model", type= str, default="gru")
     parser.add_argument("--data_dir", dest="data_dir", type=str, default="../data/")
     parser.add_argument("--num_layers", dest="num_layers", type=int, default=1)
     parser.add_argument("--rnn_size", dest="rnn_size", type=int, default=512)
-    parser.add_argument("--max_word_length", dest="max_word_length", type=int, default=15)
+    parser.add_argument("--max_word_length", dest="max_word_length", type=int, default=13)
     parser.add_argument("--filter_nums", dest="filter_nums", type=list, default=[32,32,32,64,128,128,128])
     parser.add_argument("--hightway", dest="highway", type=bool, default=True)
     parser.add_argument("--kernels", dest="kernels", type=list, default=[2,3,4,5,6,7,8])
     parser.add_argument("--index_dir", dest="index_dir", type=str, default="../data/char_index.txt")
-    parser.add_argument("--itrs", dest="itrs", type=int, default=2001)
-    parser.add_argument("--batch_size", dest="batch_size", type=int, default=120)
+    parser.add_argument("--itrs", dest="itrs", type=int, default=10001)
+    parser.add_argument("--batch_size", dest="batch_size", type=int, default=3)
     parser.add_argument("--embedding_size", dest="embedding_size", default=64)
     parser.add_argument("--max_time_step", dest="max_time_step", type=int, default=20)
     parser.add_argument("--vocab_size", dest="vocab_size", type=int, default=3249)
